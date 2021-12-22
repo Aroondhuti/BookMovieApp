@@ -1,176 +1,208 @@
-import React, { useState, useEffect } from "react";
+import React, { Component } from "react";
 import Header from "../../common/header/Header";
 import Typography from "@material-ui/core/Typography";
 import "./Details.css";
 import YouTube from "react-youtube";
-import ImageList from "@material-ui/core/ImageList";
-import ImageListItem from "@material-ui/core/ImageListItem";
-import ImageListItemBar from "@material-ui/core/ImageListItemBar";
+import GridListTile from "@material-ui/core/GridListTile";
+import GridListTileBar from "@material-ui/core/GridListTileBar";
 import StarBorderIcon from "@material-ui/icons/StarBorder";
 import { Link } from "react-router-dom";
+import GridList from "@material-ui/core/GridList";
 
-const Details = (props) => {
-  const [Movie, setMovie] = useState({});
-  const [StarIcons, setStarIcons] = useState([
-    {
-      id: 1,
-      color: "black",
-    },
-    {
-      id: 2,
-      color: "black",
-    },
-    {
-      id: 3,
-      color: "black",
-    },
-    {
-      id: 4,
-      color: "black",
-    },
-    {
-      id: 5,
-      color: "black",
-    },
-  ]);
-
-  const ytVideoOptions = {
-    height: "300",
-    width: "700",
-    playerVars: {
-      autoplay: 1,
-    },
-  };
-
-  useEffect(() => {
-    //Fetch single movie
-    fetch(props.baseUrl + "movies/" + props.match.params.id, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-cache",
+class Details extends Component {
+  constructor() {
+    super();
+    this.state = {
+      movie: {
+        genres: [],
+        trailer_url: "",
+        artists: [],
       },
-    })
-      .then((response) => response.json())
-      .then((response) => setMovie(response));
-  }, []);
+      starIcons: [
+        {
+          id: 1,
+          stateId: "star1",
+          color: "black",
+        },
+        {
+          id: 2,
+          stateId: "star2",
+          color: "black",
+        },
+        {
+          id: 3,
+          stateId: "star3",
+          color: "black",
+        },
+        {
+          id: 4,
+          stateId: "star4",
+          color: "black",
+        },
+        {
+          id: 5,
+          stateId: "star5",
+          color: "black",
+        },
+      ],
+    };
+  }
 
-  const starClickHandler = (starId) => {
-    let starsList = [];
-    for (let i of StarIcons) {
-      let temp = i;
-      if (i.id <= starId) {
-        temp.color = "yellow";
-      } else {
-        temp.color = "black";
+  UNSAFE_componentWillMount() {
+    //fetching selected movies
+    let that = this;
+    let dataMovie = null;
+    let xhrMovie = new XMLHttpRequest();
+    xhrMovie.addEventListener("readystatechange", function () {
+      if (this.readyState === 4) {
+        that.setState({
+          movie: JSON.parse(this.responseText),
+        });
       }
-      starsList.push(temp);
-    }
+    });
 
-    setStarIcons(starsList);
+    xhrMovie.open(
+      "GET",
+      this.props.baseUrl + "movies/" + this.props.match.params.id
+    );
+    xhrMovie.setRequestHeader("Cache-Control", "no-cache");
+    xhrMovie.send(dataMovie);
+  }
+
+  //redirecting to wiki
+  artistClickHandler = (url) => {
+    window.location = url;
   };
 
-  return (
-    <div className="details-page">
-      <Header
-        id={props.match.params.id}
-        baseUrl={props.baseUrl}
-        showBookShowButton={true}
-      />
-      <div className="back-button">
-        <Typography>
-          <Link style={{ textDecoration: "none" }} to="/">
-            &#60; Back to Home
-          </Link>
-        </Typography>
-      </div>
-      {Movie !== {} && (
-        <div className="details-container-flex-view">
-          <div className="details-container-flex-view-left">
-            <img src={Movie.poster_url} alt={Movie.title} />
+  //setting ratings
+  starClickHandler = (id) => {
+    let starIconList = [];
+    for (let star of this.state.starIcons) {
+      let starNode = star;
+      if (star.id <= id) {
+        starNode.color = "yellow";
+      } else {
+        starNode.color = "black";
+      }
+      starIconList.push(starNode);
+    }
+    this.setState({ starIcons: starIconList });
+  };
+
+  render() {
+    let movie = this.state.movie;
+    const opts = {
+      height: "300",
+      width: "700",
+      playerVars: {
+        autoplay: 1,
+      },
+    };
+    return (
+      <div className="details">
+        <Header
+          id={this.props.match.params.id}
+          baseUrl={this.props.baseUrl}
+          showBookShowButton="true"
+        />
+        <div className="back">
+          <Typography>
+            <Link to="/"> &#60; Back to Home</Link>
+          </Typography>
+        </div>
+        <div className="flex-containerDetails">
+          <div className="leftDetails">
+            <img src={movie.poster_url} alt={movie.title} />
           </div>
-          <div className="details-container-flex-view-middle">
+
+          <div className="middleDetails">
             <div>
-              <Typography variant="h2">{Movie.title}</Typography>
+              <Typography variant="headline" component="h2">
+                {movie.title}{" "}
+              </Typography>
             </div>
             <br />
             <div>
               <Typography>
-                <span className="bold-text">Genres: </span>{" "}
-                {Movie.genres && Movie.genres.join(", ")}
+                <span className="bold">Genres: </span> {movie.genres.join(", ")}
               </Typography>
             </div>
             <div>
               <Typography>
-                <span className="bold-text">Duration:</span> {Movie.duration}
+                <span className="bold">Duration:</span> {movie.duration}{" "}
               </Typography>
             </div>
             <div>
               <Typography>
-                <span className="bold-text">Release Date:</span>{" "}
-                {new Date(Movie.release_date).toDateString()}
+                <span className="bold">Release Date:</span>{" "}
+                {new Date(movie.release_date).toDateString()}{" "}
               </Typography>
             </div>
             <div>
               <Typography>
-                <span className="bold-text"> Rating:</span>{" "}
-                {Movie.critics_rating}{" "}
+                <span className="bold"> Rating:</span> {movie.critics_rating}{" "}
               </Typography>
             </div>
-            <div className="margin-top-16">
+            <div className="marginTop16">
               <Typography>
-                <span className="bold-text">Plot:</span>{" "}
-                <a href={Movie.wiki_url}>Wiki Link</a> {Movie.storyline}{" "}
+                <span className="bold">Plot:</span>{" "}
+                <a href={movie.wiki_url}>(Wiki Link)</a> {movie.storyline}{" "}
               </Typography>
             </div>
-            <div className="margin-top-16">
+            <div className="trailerContainer">
               <Typography>
-                <span className="bold-text">Trailer:</span>
+                <span className="bold">Trailer:</span>
               </Typography>
               <YouTube
-                videoId={Movie.trailer_url && Movie.trailer_url.split("?v=")[1]}
-                opts={ytVideoOptions}
+                videoId={movie.trailer_url.split("?v=")[1]}
+                opts={opts}
+                onReady={this._onReady}
               />
             </div>
           </div>
-          <div className="details-container-flex-view-right">
+
+          <div className="rightDetails">
             <Typography>
               <span className="bold">Rate this movie: </span>
             </Typography>
-            {StarIcons.map((star) => (
+            {this.state.starIcons.map((star) => (
               <StarBorderIcon
-                style={{ color: star.color }}
+                className={star.color}
                 key={"star" + star.id}
-                onClick={() => starClickHandler(star.id)}
+                onClick={() => this.starClickHandler(star.id)}
               />
             ))}
 
-            <div className="bold margin-bottom-16 margin-top-16">
+            <div className="bold marginBottom16 marginTop16">
               <Typography>
                 <span className="bold">Artists:</span>
               </Typography>
             </div>
-            <div>
-              <ImageList rowHeight={160} cols={2}>
-                {Movie.artists &&
-                  Movie.artists.map((artist) => (
-                    <ImageListItem key={artist.id}>
+            <div className="paddingRight">
+              <GridList cellHeight={160} cols={2}>
+                {movie.artists != null &&
+                  movie.artists.map((artist) => (
+                    <GridListTile
+                      className="gridTile"
+                      onClick={() => this.artistClickHandler(artist.wiki_url)}
+                      key={artist.id}
+                    >
                       <img
                         src={artist.profile_url}
                         alt={artist.first_name + " " + artist.last_name}
                       />
-                      <ImageListItemBar
+                      <GridListTileBar
                         title={artist.first_name + " " + artist.last_name}
                       />
-                    </ImageListItem>
+                    </GridListTile>
                   ))}
-              </ImageList>
+              </GridList>
             </div>
           </div>
         </div>
-      )}
-    </div>
-  );
-};
+      </div>
+    );
+  }
+}
 
 export default Details;
